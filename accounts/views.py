@@ -70,6 +70,7 @@ def spotify_callback(request):
     expires_at = timezone.now() + timedelta(seconds=token_data["expires_in"])
 
     # Step 2 — get the user's Spotify profile
+    print("Profile")
     profile = requests.get(
         "https://api.spotify.com/v1/me",
         headers={"Authorization": f"Bearer {access_token}"}
