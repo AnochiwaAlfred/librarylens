@@ -80,7 +80,7 @@ if DEBUG:
             "default":{
             'ENGINE': 'django.db.backends.postgresql',
             'NAME': config('DATABASE_NAME', default='librarylens'),
-            'USER': config('DATABASE_USER', default='anochiwaalfred'),
+            'USER': config('DATABASE_USER', default='postgres'),
             'PASSWORD': config('DATABASE_PASSWORD', default='Alfieolli'),
             'HOST': config('DB_HOST', default='localhost'),
             'PORT': config('DB_PORT', default=5432),
