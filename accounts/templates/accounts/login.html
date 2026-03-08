@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Soundvault — Login</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #060612;
+    --surface: rgba(255,255,255,0.04);
+    --border: rgba(255,255,255,0.08);
+    --border-bright: rgba(255,255,255,0.15);
+    --text: #f0eeff;
+    --muted: rgba(240,238,255,0.45);
+    --accent: #1DB954;
+    --accent2: #8B5CF6;
+    --accent3: #EC4899;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  /* ── ORBS ── */
+  .orb {
+    position: fixed; border-radius:50%;
+    filter: blur(80px); pointer-events:none; z-index:0;
+  }
+  .orb-1 { width:600px;height:600px;background:rgba(29,185,84,0.1);top:-200px;left:-200px; }
+  .orb-2 { width:500px;height:500px;background:rgba(139,92,246,0.09);bottom:-150px;right:-150px; }
+  .orb-3 { width:300px;height:300px;background:rgba(236,72,153,0.06);top:50%;left:50%;transform:translate(-50%,-50%); }
+
+  /* ── GRID BG ── */
+  .grid-bg {
+    position: fixed; inset:0; z-index:0; pointer-events:none;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+    background-size: 60px 60px;
+    mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black, transparent);
+  }
+
+  /* ── FLOATING CARDS (decorative) ── */
+  .float-cards {
+    position:fixed; inset:0; z-index:0; pointer-events:none;
+  }
+  .float-card {
+    position:absolute;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 16px;
+    padding: 16px 20px;
+    backdrop-filter: blur(10px);
+    animation: float linear infinite;
+  }
+  .float-card-inner {
+    display:flex; align-items:center; gap:10px;
+  }
+  .float-thumb {
+    width:36px;height:36px;border-radius:8px;
+    display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;
+  }
+  .float-song { font-size:0.8rem; font-weight:500; white-space:nowrap; }
+  .float-artist { font-size:0.72rem; color:var(--muted); white-space:nowrap; }
+  .float-bar {
+    width:80px; height:3px; border-radius:50px;
+    background:rgba(255,255,255,0.1); margin-top:8px; overflow:hidden;
+  }
+  .float-bar-fill {
+    height:100%; border-radius:50px; background:var(--accent);
+  }
+
+  .float-card:nth-child(1) { top:12%; left:5%; animation-duration:18s; animation-delay:0s; }
+  .float-card:nth-child(2) { top:25%; right:6%; animation-duration:22s; animation-delay:-5s; }
+  .float-card:nth-child(3) { bottom:20%; left:8%; animation-duration:20s; animation-delay:-10s; }
+  .float-card:nth-child(4) { bottom:30%; right:5%; animation-duration:25s; animation-delay:-3s; }
+  .float-card:nth-child(5) { top:60%; left:3%; animation-duration:19s; animation-delay:-7s; }
+
+  @keyframes float {
+    0%,100% { transform: translateY(0px) rotate(-1deg); }
+    33%      { transform: translateY(-12px) rotate(0.5deg); }
+    66%      { transform: translateY(6px) rotate(-0.5deg); }
+  }
+
+  /* ── MAIN CARD ── */
+  .login-wrap {
+    position: relative; z-index:10;
+    width: 100%; max-width: 420px;
+    padding: 0 24px;
+    animation: fadeUp 0.7s ease both;
+  }
+
+  .login-card {
+    background: rgba(255,255,255,0.05);
+    backdrop-filter: blur(32px);
+    -webkit-backdrop-filter: blur(32px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 28px;
+    padding: 48px 40px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* top shimmer line */
+  .login-card::before {
+    content:''; position:absolute; top:0; left:20%; right:20%; height:1px;
+    background: linear-gradient(90deg, transparent, rgba(29,185,84,0.5), transparent);
+  }
+
+  /* inner glow */
+  .login-card::after {
+    content:''; position:absolute;
+    width:200px; height:200px; border-radius:50%;
+    background: rgba(29,185,84,0.06);
+    filter: blur(40px);
+    top:-60px; left:50%; transform:translateX(-50%);
+    pointer-events:none;
+  }
+
+  .login-logo {
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    font-family:'Syne',sans-serif; font-weight:800; font-size:1.4rem;
+    letter-spacing:-0.02em; margin-bottom:36px;
+  }
+  .login-logo .accent { color: var(--accent); }
+  .login-logo-dot {
+    width:8px;height:8px;border-radius:50%;
+    background:var(--accent);
+    box-shadow:0 0 10px var(--accent);
+  }
+
+  .login-heading {
+    font-family:'Syne',sans-serif;
+    font-size:1.7rem; font-weight:800;
+    letter-spacing:-0.03em;
+    line-height:1.2;
+    text-align:center;
+    margin-bottom:10px;
+  }
+  .login-heading .dim { color: rgba(240,238,255,0.35); }
+
+  .login-sub {
+    text-align:center; font-size:0.87rem;
+    color:var(--muted); line-height:1.6;
+    margin-bottom:36px;
+  }
+
+  /* ── SPOTIFY BUTTON ── */
+  .btn-spotify {
+    display:flex; align-items:center; justify-content:center; gap:12px;
+    width:100%; padding:16px;
+    background: var(--accent);
+    color: #000;
+    font-family:'Syne',sans-serif; font-weight:700; font-size:0.95rem;
+    border:none; border-radius:14px; cursor:pointer;
+    text-decoration:none;
+    transition: all 0.25s;
+    box-shadow: 0 8px 32px rgba(29,185,84,0.25), 0 0 0 0 rgba(29,185,84,0.3);
+    position:relative; overflow:hidden;
+  }
+  .btn-spotify::before {
+    content:''; position:absolute; inset:0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.15), transparent);
+    opacity:0; transition:opacity 0.25s;
+  }
+  .btn-spotify:hover {
+    transform:translateY(-2px);
+    box-shadow: 0 12px 40px rgba(29,185,84,0.4), 0 0 0 4px rgba(29,185,84,0.1);
+  }
+  .btn-spotify:hover::before { opacity:1; }
+  .btn-spotify:active { transform:translateY(0); }
+  .btn-spotify svg { width:22px;height:22px;flex-shrink:0; }
+
+  /* ── DIVIDER ── */
+  .divider {
+    display:flex; align-items:center; gap:12px;
+    margin: 28px 0;
+  }
+  .divider-line { flex:1; height:1px; background:var(--border); }
+  .divider-text { font-size:0.75rem; color:var(--muted); white-space:nowrap; }
+
+  /* ── PERMISSIONS ── */
+  .perms {
+    display:flex; flex-direction:column; gap:10px;
+    margin-bottom:28px;
+  }
+  .perm-row {
+    display:flex; align-items:center; gap:10px;
+    padding:12px 14px;
+    background:rgba(255,255,255,0.03);
+    border:1px solid var(--border);
+    border-radius:12px;
+    font-size:0.82rem;
+  }
+  .perm-icon-wrap {
+    width:28px;height:28px;border-radius:8px;
+    display:flex;align-items:center;justify-content:center;
+    font-size:0.8rem;flex-shrink:0;
+  }
+  .perm-icon-wrap.yes { background:rgba(29,185,84,0.12); }
+  .perm-icon-wrap.no  { background:rgba(255,255,255,0.05); }
+  .perm-text { flex:1; color:var(--text); }
+  .perm-badge {
+    font-size:0.68rem; font-weight:600; letter-spacing:0.06em;
+    padding:2px 8px; border-radius:50px;
+  }
+  .perm-badge.yes { background:rgba(29,185,84,0.15); color:var(--accent); }
+  .perm-badge.no  { background:rgba(255,255,255,0.06); color:var(--muted); }
+
+  /* ── FOOTER NOTE ── */
+  .login-note {
+    text-align:center; font-size:0.75rem; color:var(--muted);
+    line-height:1.6;
+  }
+  .login-note a { color:var(--accent2); text-decoration:none; }
+  .login-note a:hover { text-decoration:underline; }
+
+  /* ── STATS STRIP (bottom of card) ── */
+  .stats-strip {
+    display:grid; grid-template-columns:repeat(3,1fr);
+    gap:1px; background:var(--border);
+    border:1px solid var(--border); border-radius:14px;
+    overflow:hidden; margin-top:28px;
+  }
+  .strip-item {
+    background:rgba(255,255,255,0.03);
+    padding:12px 10px; text-align:center;
+  }
+  .strip-val {
+    font-family:'Syne',sans-serif; font-size:1rem; font-weight:800;
+    line-height:1;
+  }
+  .strip-label { font-size:0.68rem; color:var(--muted); margin-top:3px; }
+
+  /* ── ANIMATION ── */
+  @keyframes fadeUp {
+    from { opacity:0; transform:translateY(24px); }
+    to   { opacity:1; transform:translateY(0); }
+  }
+</style>
+</head>
+<body>
+
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+<div class="orb orb-3"></div>
+<div class="grid-bg"></div>
+
+<!-- Floating song cards (decorative) -->
+<div class="float-cards">
+  <div class="float-card">
+    <div class="float-card-inner">
+      <div class="float-thumb" style="background:rgba(29,185,84,0.15)">🎵</div>
+      <div><div class="float-song">Nights</div><div class="float-artist">Frank Ocean</div></div>
+    </div>
+    <div class="float-bar"><div class="float-bar-fill" style="width:70%"></div></div>
+  </div>
+  <div class="float-card">
+    <div class="float-card-inner">
+      <div class="float-thumb" style="background:rgba(139,92,246,0.15)">🎤</div>
+      <div><div class="float-song">Euphoria</div><div class="float-artist">Kendrick Lamar</div></div>
+    </div>
+    <div class="float-bar"><div class="float-bar-fill" style="width:90%;background:var(--accent2)"></div></div>
+  </div>
+  <div class="float-card">
+    <div class="float-card-inner">
+      <div class="float-thumb" style="background:rgba(236,72,153,0.15)">🎼</div>
+      <div><div class="float-song">Kill Bill</div><div class="float-artist">SZA</div></div>
+    </div>
+    <div class="float-bar"><div class="float-bar-fill" style="width:55%;background:var(--accent3)"></div></div>
+  </div>
+  <div class="float-card">
+    <div class="float-card-inner">
+      <div class="float-thumb" style="background:rgba(251,191,36,0.15)">🎹</div>
+      <div><div class="float-song">See You Again</div><div class="float-artist">Tyler the Creator</div></div>
+    </div>
+    <div class="float-bar"><div class="float-bar-fill" style="width:80%;background:#FBB024"></div></div>
+  </div>
+  <div class="float-card">
+    <div class="float-card-inner">
+      <div class="float-thumb" style="background:rgba(56,189,248,0.15)">🎸</div>
+      <div><div class="float-song">Redbone</div><div class="float-artist">Childish Gambino</div></div>
+    </div>
+    <div class="float-bar"><div class="float-bar-fill" style="width:65%;background:#38BDF8"></div></div>
+  </div>
+</div>
+
+<!-- LOGIN CARD -->
+<div class="login-wrap">
+  <div class="login-card">
+
+    <div class="login-logo">
+      <div class="login-logo-dot"></div>
+      <span><span class="accent">Sound</span>vault</span>
+    </div>
+
+    <h1 class="login-heading">
+      Your music.<br>
+      <span class="dim">Finally understood.</span>
+    </h1>
+
+    <p class="login-sub">
+      Connect your Spotify account to explore your liked songs, discover patterns, and export your library.
+    </p>
+
+    <!-- Django: href points to spotify_login view -->
+    <a href="{% url 'spotify_login' %}" class="btn-spotify">
+      <svg viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/>
+      </svg>
+      Continue with Spotify
+    </a>
+
+    <div class="divider">
+      <div class="divider-line"></div>
+      <div class="divider-text">What we access</div>
+      <div class="divider-line"></div>
+    </div>
+
+    <div class="perms">
+      <div class="perm-row">
+        <div class="perm-icon-wrap yes">♪</div>
+        <div class="perm-text">Read your liked songs</div>
+        <div class="perm-badge yes">Allowed</div>
+      </div>
+      <div class="perm-row">
+        <div class="perm-icon-wrap yes">◎</div>
+        <div class="perm-text">View your profile name & ID</div>
+        <div class="perm-badge yes">Allowed</div>
+      </div>
+      <div class="perm-row">
+        <div class="perm-icon-wrap no">▶</div>
+        <div class="perm-text">Control playback or modify library</div>
+        <div class="perm-badge no">Never</div>
+      </div>
+    </div>
+
+    <div class="login-note">
+      By continuing you agree to our
+      <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>.<br/>
+      We never store your data on external servers.
+    </div>
+
+    <div class="stats-strip">
+      <div class="strip-item">
+        <div class="strip-val" style="color:var(--accent)">∞</div>
+        <div class="strip-label">Songs tracked</div>
+      </div>
+      <div class="strip-item">
+        <div class="strip-val" style="color:var(--accent2)">4</div>
+        <div class="strip-label">Export formats</div>
+      </div>
+      <div class="strip-item">
+        <div class="strip-val" style="color:var(--accent3)">0</div>
+        <div class="strip-label">Data sold</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+</body>
+</html>

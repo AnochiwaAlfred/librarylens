@@ -1,0 +1,50 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual Environments
+.venv/
+venv/
+env/
+
+# Database
+*.sqlite3
+db.sqlite3
+
+
+# IDEs and Tools
+.vscode/
+.idea/
+.qodo/
+
+# Environment Variables
+.env
+googlecred.json
+
+# Static
+staticfiles/
+media/
+
+.changelogs/
+.python-version
+
+
+*account_urls_migrations.md
+*client_api_urls_migrations.md
+*common_urls_migrations.md
+*counsellor_api_urls_migrations.md
+*theragist_payments_urls_migrations.md
+*FLOW.md
+*database_migration_risks.md
+*project_v1_v2_comparison.md
+*project_verification_report.md
+*setup_db.sh
+
+
+*docker-compose.prod.yml
+*docker-compose.yml
+*.env.prod
+*credentials.json
+*token.json
+*nginx/

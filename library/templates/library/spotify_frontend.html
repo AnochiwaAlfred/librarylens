@@ -1,0 +1,1011 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Soundvault — Your Spotify Library</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #060612;
+    --surface: rgba(255,255,255,0.04);
+    --surface-hover: rgba(255,255,255,0.07);
+    --border: rgba(255,255,255,0.08);
+    --border-bright: rgba(255,255,255,0.15);
+    --text: #f0eeff;
+    --muted: rgba(240,238,255,0.45);
+    --accent: #1DB954;
+    --accent2: #8B5CF6;
+    --accent3: #EC4899;
+    --glow: rgba(29,185,84,0.15);
+    --glow2: rgba(139,92,246,0.12);
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── ORBS ── */
+  .orb {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(80px);
+    pointer-events: none;
+    z-index: 0;
+  }
+  .orb-1 { width:500px; height:500px; background:rgba(29,185,84,0.12); top:-100px; left:-150px; }
+  .orb-2 { width:400px; height:400px; background:rgba(139,92,246,0.1); bottom:10%; right:-100px; }
+  .orb-3 { width:300px; height:300px; background:rgba(236,72,153,0.07); top:40%; left:30%; }
+
+  /* ── GLASS ── */
+  .glass {
+    background: var(--surface);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+  }
+  .glass-bright {
+    background: rgba(255,255,255,0.06);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid var(--border-bright);
+    border-radius: 20px;
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed; top:0; left:0; right:0; z-index:100;
+    padding: 16px 40px;
+    display: flex; align-items:center; justify-content:space-between;
+    background: rgba(6,6,18,0.6);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-logo {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 1.2rem;
+    letter-spacing: -0.02em;
+    display:flex; align-items:center; gap:8px;
+  }
+  .nav-logo span { color: var(--accent); }
+  .nav-tabs {
+    display:flex; gap:4px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 50px;
+    padding: 4px;
+  }
+  .nav-tab {
+    padding: 7px 20px;
+    border-radius: 50px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: var(--muted);
+    border: none; background: transparent;
+  }
+  .nav-tab.active {
+    background: rgba(255,255,255,0.1);
+    color: var(--text);
+  }
+  .nav-tab:hover:not(.active) { color: var(--text); }
+
+  /* ── PAGES ── */
+  .page { display:none; position:relative; z-index:1; }
+  .page.active { display:block; }
+
+  /* ════════════════════════════
+     LANDING PAGE
+  ════════════════════════════ */
+  #landing {
+    min-height: 100vh;
+    display: flex; flex-direction:column; align-items:center; justify-content:center;
+    padding: 120px 24px 80px;
+    text-align:center;
+  }
+  .landing-badge {
+    display:inline-flex; align-items:center; gap:8px;
+    padding: 6px 16px;
+    background: rgba(29,185,84,0.1);
+    border: 1px solid rgba(29,185,84,0.25);
+    border-radius: 50px;
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: var(--accent);
+    margin-bottom: 28px;
+    animation: fadeUp 0.6s ease both;
+  }
+  .landing-badge::before { content:'●'; font-size:0.5rem; }
+
+  .landing-title {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(3rem, 8vw, 6rem);
+    font-weight: 800;
+    line-height: 1.0;
+    letter-spacing: -0.04em;
+    margin-bottom: 24px;
+    animation: fadeUp 0.6s 0.1s ease both;
+  }
+  .landing-title .line2 { color: transparent; -webkit-text-stroke: 1px rgba(255,255,255,0.3); }
+  .landing-title .accent { color: var(--accent); }
+
+  .landing-sub {
+    font-size: 1.1rem;
+    color: var(--muted);
+    max-width: 480px;
+    line-height: 1.7;
+    margin-bottom: 48px;
+    animation: fadeUp 0.6s 0.2s ease both;
+  }
+
+  .btn-spotify {
+    display:inline-flex; align-items:center; gap:12px;
+    padding: 16px 36px;
+    background: var(--accent);
+    color: #000;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 0.95rem;
+    letter-spacing: 0.01em;
+    border-radius: 50px;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s;
+    box-shadow: 0 0 40px rgba(29,185,84,0.3);
+    animation: fadeUp 0.6s 0.3s ease both;
+  }
+  .btn-spotify:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 60px rgba(29,185,84,0.5);
+    background: #1ed760;
+  }
+  .btn-spotify svg { width:20px; height:20px; }
+
+  .permissions {
+    display:flex; gap:24px; flex-wrap:wrap; justify-content:center;
+    margin-top: 32px;
+    animation: fadeUp 0.6s 0.4s ease both;
+  }
+  .perm-item {
+    display:flex; align-items:center; gap:8px;
+    font-size: 0.82rem; color: var(--muted);
+  }
+  .perm-icon { color: var(--accent); font-size: 0.7rem; }
+
+  /* Preview cards */
+  .preview-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    max-width: 900px;
+    margin: 80px auto 0;
+    animation: fadeUp 0.8s 0.5s ease both;
+  }
+  .preview-card {
+    padding: 24px;
+    border-radius: 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    text-align:left;
+    position:relative; overflow:hidden;
+  }
+  .preview-card::before {
+    content:''; position:absolute; top:0; left:0; right:0; height:1px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+  }
+  .preview-card-label {
+    font-size: 0.72rem; font-weight:600; letter-spacing:0.1em;
+    text-transform:uppercase; color: var(--muted); margin-bottom:16px;
+  }
+  .preview-stat { font-family:'Syne',sans-serif; font-size:2.2rem; font-weight:800; line-height:1; }
+  .preview-stat.green { color: var(--accent); }
+  .preview-stat.purple { color: var(--accent2); }
+  .preview-stat.pink { color: var(--accent3); }
+  .preview-stat-sub { font-size:0.82rem; color:var(--muted); margin-top:6px; }
+
+  .mini-bars { display:flex; align-items:flex-end; gap:4px; height:48px; margin-top:12px; }
+  .mini-bar {
+    flex:1; border-radius:3px 3px 0 0;
+    background: linear-gradient(to top, var(--accent), rgba(29,185,84,0.3));
+    animation: growBar 1s ease both;
+  }
+  @keyframes growBar { from { transform:scaleY(0); transform-origin:bottom; } }
+
+  .mini-list { display:flex; flex-direction:column; gap:8px; margin-top:8px; }
+  .mini-list-item {
+    display:flex; align-items:center; gap:8px; font-size:0.8rem;
+  }
+  .mini-dot { width:8px;height:8px;border-radius:50%;flex-shrink:0; }
+
+  /* ════════════════════════════
+     DASHBOARD
+  ════════════════════════════ */
+  #dashboard { padding: 100px 40px 60px; max-width:1200px; margin:0 auto; }
+
+  .dash-header {
+    display:flex; align-items:flex-end; justify-content:space-between;
+    margin-bottom: 40px;
+  }
+  .dash-greeting {
+    font-size: 0.85rem; color: var(--muted); margin-bottom:6px;
+  }
+  .dash-title {
+    font-family:'Syne',sans-serif; font-size:2rem; font-weight:800; letter-spacing:-0.03em;
+  }
+  .dash-sync {
+    display:flex; align-items:center; gap:8px;
+    padding: 10px 20px;
+    background: var(--surface); border:1px solid var(--border);
+    border-radius:50px; font-size:0.82rem; color:var(--muted); cursor:pointer;
+    transition: all 0.2s;
+  }
+  .dash-sync:hover { border-color:var(--border-bright); color:var(--text); }
+
+  /* Stat cards row */
+  .stat-row { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:24px; }
+  .stat-card {
+    padding: 24px; border-radius:20px;
+    background: var(--surface); border:1px solid var(--border);
+    position:relative; overflow:hidden;
+    animation: fadeUp 0.5s ease both;
+  }
+  .stat-card:nth-child(1) { animation-delay:0.05s; }
+  .stat-card:nth-child(2) { animation-delay:0.1s; }
+  .stat-card:nth-child(3) { animation-delay:0.15s; }
+  .stat-card:nth-child(4) { animation-delay:0.2s; }
+  .stat-card-glow {
+    position:absolute; width:80px; height:80px; border-radius:50%;
+    filter:blur(30px); top:-10px; right:-10px; pointer-events:none;
+  }
+  .stat-label { font-size:0.75rem; font-weight:500; letter-spacing:0.08em; text-transform:uppercase; color:var(--muted); margin-bottom:12px; }
+  .stat-value { font-family:'Syne',sans-serif; font-size:2.4rem; font-weight:800; line-height:1; letter-spacing:-0.03em; }
+  .stat-change { font-size:0.78rem; color:var(--muted); margin-top:6px; }
+  .stat-change .pos { color: var(--accent); }
+
+  /* Chart + Artists row */
+  .dash-row { display:grid; grid-template-columns: 1.6fr 1fr; gap:16px; margin-bottom:24px; }
+
+  .chart-card { padding:28px; border-radius:20px; background:var(--surface); border:1px solid var(--border); }
+  .card-title {
+    font-family:'Syne',sans-serif; font-size:0.95rem; font-weight:700;
+    margin-bottom:6px;
+  }
+  .card-sub { font-size:0.78rem; color:var(--muted); margin-bottom:24px; }
+
+  /* SVG bar chart */
+  .bar-chart-wrap { position:relative; }
+  .bar-chart-svg { width:100%; height:160px; overflow:visible; }
+  .bar-chart-bar { transition: opacity 0.2s; cursor:pointer; }
+  .bar-chart-bar:hover { opacity:0.8; }
+  .chart-labels { display:flex; justify-content:space-between; margin-top:8px; }
+  .chart-label { font-size:0.7rem; color:var(--muted); }
+
+  /* Artists */
+  .artists-card { padding:28px; border-radius:20px; background:var(--surface); border:1px solid var(--border); }
+  .artist-list { display:flex; flex-direction:column; gap:12px; }
+  .artist-item { display:flex; align-items:center; gap:12px; }
+  .artist-rank {
+    font-family:'Syne',sans-serif; font-size:0.7rem; font-weight:700;
+    color:var(--muted); width:18px; text-align:right; flex-shrink:0;
+  }
+  .artist-avatar {
+    width:38px; height:38px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-size:1rem; flex-shrink:0;
+  }
+  .artist-info { flex:1; min-width:0; }
+  .artist-name { font-size:0.88rem; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .artist-count { font-size:0.75rem; color:var(--muted); }
+  .artist-bar-wrap { width:60px; }
+  .artist-bar-bg { background:rgba(255,255,255,0.07); border-radius:50px; height:4px; }
+  .artist-bar-fill { height:4px; border-radius:50px; background: var(--accent); }
+
+  /* Bottom row */
+  .dash-bottom { display:grid; grid-template-columns: 1fr 1fr; gap:16px; }
+
+  /* Genres donut-style */
+  .genre-list { display:flex; flex-direction:column; gap:10px; margin-top:8px; }
+  .genre-item { display:flex; align-items:center; gap:10px; }
+  .genre-name { font-size:0.85rem; flex:1; }
+  .genre-pct { font-size:0.78rem; color:var(--muted); width:34px; text-align:right; }
+  .genre-track { flex:2; background:rgba(255,255,255,0.07); border-radius:50px; height:5px; }
+  .genre-fill { height:5px; border-radius:50px; }
+
+  /* Newest / Oldest */
+  .extremes-card { padding:28px; border-radius:20px; background:var(--surface); border:1px solid var(--border); }
+  .extreme-row { display:flex; gap:12px; }
+  .extreme-item {
+    flex:1; padding:16px; border-radius:14px;
+    background:rgba(255,255,255,0.03); border:1px solid var(--border);
+  }
+  .extreme-tag { font-size:0.68rem; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; margin-bottom:10px; }
+  .extreme-tag.new { color: var(--accent); }
+  .extreme-tag.old { color: var(--accent2); }
+  .extreme-song { font-size:0.88rem; font-weight:500; margin-bottom:2px; }
+  .extreme-artist { font-size:0.75rem; color:var(--muted); }
+  .extreme-date { font-size:0.7rem; color:var(--muted); margin-top:8px; }
+
+  /* ════════════════════════════
+     EXPLORER PAGE
+  ════════════════════════════ */
+  #explorer { padding: 100px 40px 60px; max-width:1200px; margin:0 auto; }
+
+  .explorer-header { margin-bottom:32px; }
+  .explorer-title { font-family:'Syne',sans-serif; font-size:2rem; font-weight:800; letter-spacing:-0.03em; margin-bottom:6px; }
+  .explorer-sub { font-size:0.85rem; color:var(--muted); }
+
+  .explorer-controls {
+    display:flex; gap:12px; flex-wrap:wrap; margin-bottom:24px; align-items:center;
+  }
+  .search-wrap {
+    flex:1; min-width:240px; position:relative;
+  }
+  .search-wrap input {
+    width:100%; padding:12px 16px 12px 44px;
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:12px; color:var(--text);
+    font-family:'DM Sans',sans-serif; font-size:0.9rem;
+    outline:none; transition: border-color 0.2s;
+  }
+  .search-wrap input:focus { border-color:var(--border-bright); }
+  .search-wrap input::placeholder { color:var(--muted); }
+  .search-icon {
+    position:absolute; left:14px; top:50%; transform:translateY(-50%);
+    color:var(--muted); pointer-events:none;
+  }
+
+  .filter-select {
+    padding:12px 16px;
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:12px; color:var(--text);
+    font-family:'DM Sans',sans-serif; font-size:0.85rem;
+    outline:none; cursor:pointer; appearance:none;
+    padding-right:36px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.4)' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat:no-repeat; background-position:right 12px center;
+  }
+
+  .sort-pills { display:flex; gap:6px; }
+  .sort-pill {
+    padding:10px 16px; border-radius:50px;
+    background:var(--surface); border:1px solid var(--border);
+    font-size:0.8rem; color:var(--muted); cursor:pointer; transition:all 0.2s;
+    white-space:nowrap;
+  }
+  .sort-pill.active {
+    background:rgba(29,185,84,0.12); border-color:rgba(29,185,84,0.3); color:var(--accent);
+  }
+
+  /* Song table */
+  .song-table { width:100%; border-collapse:collapse; }
+  .song-table thead th {
+    text-align:left; padding:10px 16px;
+    font-size:0.72rem; font-weight:600; letter-spacing:0.08em; text-transform:uppercase;
+    color:var(--muted); border-bottom:1px solid var(--border);
+  }
+  .song-table tbody tr {
+    border-bottom:1px solid rgba(255,255,255,0.04);
+    transition:background 0.15s; cursor:pointer;
+  }
+  .song-table tbody tr:hover { background:var(--surface-hover); }
+  .song-table td { padding:12px 16px; font-size:0.88rem; }
+  .song-num { color:var(--muted); font-size:0.8rem; width:40px; }
+  .song-title-cell { display:flex; align-items:center; gap:12px; }
+  .song-thumb {
+    width:40px; height:40px; border-radius:8px; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center; font-size:1.1rem;
+  }
+  .song-name { font-weight:500; }
+  .song-artist-small { font-size:0.78rem; color:var(--muted); }
+  .song-album-cell { color:var(--muted); font-size:0.82rem; }
+  .song-year { color:var(--muted); font-size:0.82rem; }
+  .song-date { color:var(--muted); font-size:0.8rem; }
+  .pop-bar-wrap { width:60px; }
+  .pop-bar { height:3px; border-radius:50px; background:rgba(255,255,255,0.1); }
+  .pop-fill { height:3px; border-radius:50px; background:var(--accent2); }
+
+  .table-wrap {
+    border-radius:20px; background:var(--surface); border:1px solid var(--border);
+    overflow:hidden;
+  }
+  .table-footer {
+    padding:16px 24px; display:flex; align-items:center; justify-content:space-between;
+    border-top:1px solid var(--border);
+  }
+  .table-count { font-size:0.82rem; color:var(--muted); }
+  .pagination { display:flex; gap:6px; }
+  .page-btn {
+    width:32px;height:32px; border-radius:8px;
+    background:var(--surface); border:1px solid var(--border);
+    display:flex; align-items:center; justify-content:center;
+    font-size:0.82rem; cursor:pointer; transition:all 0.2s; color:var(--muted);
+  }
+  .page-btn.active { background:rgba(29,185,84,0.12); border-color:rgba(29,185,84,0.3); color:var(--accent); }
+
+  /* ════════════════════════════
+     EXPORT PAGE
+  ════════════════════════════ */
+  #exports { padding: 100px 40px 60px; max-width:900px; margin:0 auto; }
+
+  .export-header { margin-bottom:48px; }
+  .export-title { font-family:'Syne',sans-serif; font-size:2rem; font-weight:800; letter-spacing:-0.03em; margin-bottom:6px; }
+  .export-sub { font-size:0.85rem; color:var(--muted); }
+
+  .export-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:40px; }
+  .export-card {
+    padding:28px; border-radius:20px;
+    background:var(--surface); border:1px solid var(--border);
+    cursor:pointer; transition:all 0.25s; position:relative; overflow:hidden;
+  }
+  .export-card::after {
+    content:''; position:absolute; inset:0; border-radius:20px;
+    opacity:0; transition:opacity 0.25s;
+  }
+  .export-card:hover { border-color:var(--border-bright); transform:translateY(-2px); }
+  .export-card:hover::after { opacity:1; }
+  .export-card.csv::after { background:rgba(29,185,84,0.04); }
+  .export-card.json::after { background:rgba(139,92,246,0.04); }
+  .export-card.txt::after { background:rgba(236,72,153,0.04); }
+  .export-card.md::after { background:rgba(251,191,36,0.04); }
+
+  .export-icon {
+    width:48px; height:48px; border-radius:14px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:1.4rem; margin-bottom:16px;
+  }
+  .export-icon.csv { background:rgba(29,185,84,0.12); }
+  .export-icon.json { background:rgba(139,92,246,0.12); }
+  .export-icon.txt { background:rgba(236,72,153,0.12); }
+  .export-icon.md { background:rgba(251,191,36,0.12); }
+
+  .export-format {
+    font-family:'Syne',sans-serif; font-size:1.1rem; font-weight:700;
+    margin-bottom:6px;
+  }
+  .export-desc { font-size:0.82rem; color:var(--muted); line-height:1.5; margin-bottom:16px; }
+  .export-use {
+    font-size:0.75rem; color:var(--muted);
+    display:flex; align-items:center; gap:6px;
+  }
+  .export-use::before { content:'→'; color:var(--muted); }
+
+  .export-btn {
+    display:inline-flex; align-items:center; gap:8px;
+    padding: 10px 20px; border-radius:50px;
+    font-size:0.82rem; font-weight:600;
+    cursor:pointer; border:none; transition:all 0.2s;
+    position:relative; z-index:1;
+  }
+  .export-btn.csv { background:rgba(29,185,84,0.15); color:var(--accent); }
+  .export-btn.json { background:rgba(139,92,246,0.15); color:var(--accent2); }
+  .export-btn.txt { background:rgba(236,72,153,0.15); color:var(--accent3); }
+  .export-btn.md { background:rgba(251,191,36,0.15); color:#FBB024; }
+  .export-btn:hover { filter:brightness(1.2); }
+
+  /* Preview panel */
+  .preview-panel {
+    padding:28px; border-radius:20px;
+    background:var(--surface); border:1px solid var(--border);
+  }
+  .preview-panel-title { font-family:'Syne',sans-serif; font-size:0.95rem; font-weight:700; margin-bottom:16px; }
+  .code-block {
+    background:rgba(0,0,0,0.4); border:1px solid var(--border);
+    border-radius:12px; padding:20px;
+    font-family:'Courier New',monospace; font-size:0.78rem;
+    line-height:1.8; color:rgba(255,255,255,0.7);
+    overflow-x:auto;
+  }
+  .code-block .key { color:#8B5CF6; }
+  .code-block .str { color:#1DB954; }
+  .code-block .num { color:#EC4899; }
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeUp {
+    from { opacity:0; transform:translateY(20px); }
+    to { opacity:1; transform:translateY(0); }
+  }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width:6px; }
+  ::-webkit-scrollbar-track { background:transparent; }
+  ::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.1); border-radius:3px; }
+
+  @media (max-width:768px) {
+    nav { padding:12px 20px; }
+    .nav-tabs { display:none; }
+    .stat-row { grid-template-columns:1fr 1fr; }
+    .dash-row, .dash-bottom { grid-template-columns:1fr; }
+    .export-grid { grid-template-columns:1fr; }
+    .preview-grid { grid-template-columns:1fr; }
+    #dashboard, #explorer, #exports { padding:100px 20px 60px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Ambient orbs -->
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+<div class="orb orb-3"></div>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">◆ <span>Sound</span>vault</div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showPage('landing',this)">Home</button>
+    <button class="nav-tab" onclick="showPage('dashboard',this)">Dashboard</button>
+    <button class="nav-tab" onclick="showPage('explorer',this)">Explorer</button>
+    <button class="nav-tab" onclick="showPage('exports',this)">Export</button>
+  </div>
+  <div style="font-size:0.82rem;color:var(--muted);display:flex;align-items:center;gap:8px;">
+    <span style="width:8px;height:8px;background:var(--accent);border-radius:50%;display:inline-block;box-shadow:0 0 8px var(--accent);"></span>
+    Connected
+  </div>
+</nav>
+
+<!-- ════════ LANDING ════════ -->
+<div id="landing" class="page active">
+  <div class="landing-badge">Your Spotify Library, Reimagined</div>
+
+  <h1 class="landing-title">
+    All your music.<br>
+    <span class="line2">One dashboard.</span>
+  </h1>
+
+  <p class="landing-sub">
+    Explore, analyze, and export your entire Spotify liked songs library. Discover patterns in your listening history you never knew existed.
+  </p>
+
+  <button class="btn-spotify" onclick="showPage('dashboard', document.querySelectorAll('.nav-tab')[1])">
+    <svg viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/>
+    </svg>
+    Continue with Spotify
+  </button>
+
+  <div class="permissions">
+    <div class="perm-item"><span class="perm-icon">✓</span> Read liked songs</div>
+    <div class="perm-item"><span class="perm-icon">✓</span> View library metadata</div>
+    <div class="perm-item"><span class="perm-icon">✗</span> No playback control</div>
+    <div class="perm-item"><span class="perm-icon">✗</span> No data stored externally</div>
+  </div>
+
+  <div class="preview-grid">
+    <div class="preview-card">
+      <div class="preview-card-label">Total Library</div>
+      <div class="preview-stat green">2,847</div>
+      <div class="preview-stat-sub">liked songs tracked</div>
+      <div class="mini-bars">
+        <div class="mini-bar" style="height:30%;animation-delay:0.1s"></div>
+        <div class="mini-bar" style="height:50%;animation-delay:0.15s"></div>
+        <div class="mini-bar" style="height:40%;animation-delay:0.2s"></div>
+        <div class="mini-bar" style="height:70%;animation-delay:0.25s"></div>
+        <div class="mini-bar" style="height:60%;animation-delay:0.3s"></div>
+        <div class="mini-bar" style="height:90%;animation-delay:0.35s"></div>
+        <div class="mini-bar" style="height:80%;animation-delay:0.4s"></div>
+      </div>
+    </div>
+
+    <div class="preview-card">
+      <div class="preview-card-label">Top Artists</div>
+      <div class="mini-list">
+        <div class="mini-list-item"><div class="mini-dot" style="background:#1DB954"></div> Frank Ocean — 84 songs</div>
+        <div class="mini-list-item"><div class="mini-dot" style="background:#8B5CF6"></div> Kendrick Lamar — 71 songs</div>
+        <div class="mini-list-item"><div class="mini-dot" style="background:#EC4899"></div> SZA — 63 songs</div>
+        <div class="mini-list-item"><div class="mini-dot" style="background:#FBB024"></div> Tyler the Creator — 58 songs</div>
+        <div class="mini-list-item"><div class="mini-dot" style="background:#38BDF8"></div> Childish Gambino — 47 songs</div>
+      </div>
+    </div>
+
+    <div class="preview-card">
+      <div class="preview-card-label">Genres</div>
+      <div class="preview-stat purple" style="font-size:1.6rem;margin-bottom:12px;">Neo-Soul<br>& R&B</div>
+      <div class="preview-stat-sub" style="margin-bottom:12px;">Your dominant taste</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        <span style="padding:3px 10px;background:rgba(139,92,246,0.15);border:1px solid rgba(139,92,246,0.25);border-radius:50px;font-size:0.72rem;color:#8B5CF6;">Hip-Hop</span>
+        <span style="padding:3px 10px;background:rgba(29,185,84,0.1);border:1px solid rgba(29,185,84,0.2);border-radius:50px;font-size:0.72rem;color:var(--accent);">R&B</span>
+        <span style="padding:3px 10px;background:rgba(236,72,153,0.1);border:1px solid rgba(236,72,153,0.2);border-radius:50px;font-size:0.72rem;color:var(--accent3);">Soul</span>
+        <span style="padding:3px 10px;background:rgba(251,191,36,0.1);border:1px solid rgba(251,191,36,0.2);border-radius:50px;font-size:0.72rem;color:#FBB024;">Jazz</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ DASHBOARD ════════ -->
+<div id="dashboard" class="page">
+  <div class="dash-header">
+    <div>
+      <div class="dash-greeting">Welcome back, Alfred 👋</div>
+      <div class="dash-title">Your Music Universe</div>
+    </div>
+    <button class="dash-sync">
+      ↻ Sync Library
+    </button>
+  </div>
+
+  <!-- Stats row -->
+  <div class="stat-row">
+    <div class="stat-card">
+      <div class="stat-card-glow" style="background:rgba(29,185,84,0.3)"></div>
+      <div class="stat-label">Total Songs</div>
+      <div class="stat-value" style="color:var(--accent)">2,847</div>
+      <div class="stat-change"><span class="pos">+124</span> this month</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-glow" style="background:rgba(139,92,246,0.3)"></div>
+      <div class="stat-label">Unique Artists</div>
+      <div class="stat-value" style="color:var(--accent2)">438</div>
+      <div class="stat-change"><span class="pos">+12</span> new artists</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-glow" style="background:rgba(236,72,153,0.3)"></div>
+      <div class="stat-label">Genres</div>
+      <div class="stat-value" style="color:var(--accent3)">32</div>
+      <div class="stat-change">across your library</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-glow" style="background:rgba(251,191,36,0.3)"></div>
+      <div class="stat-label">Avg. Release Year</div>
+      <div class="stat-value" style="color:#FBB024">2019</div>
+      <div class="stat-change">mostly modern taste</div>
+    </div>
+  </div>
+
+  <!-- Chart + Artists -->
+  <div class="dash-row">
+    <div class="chart-card">
+      <div class="card-title">Songs Added Per Year</div>
+      <div class="card-sub">Your discovery timeline</div>
+      <div class="bar-chart-wrap">
+        <svg class="bar-chart-svg" viewBox="0 0 560 160" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="barGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#1DB954"/>
+              <stop offset="100%" stop-color="rgba(29,185,84,0.2)"/>
+            </linearGradient>
+            <linearGradient id="barGrad2" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#8B5CF6"/>
+              <stop offset="100%" stop-color="rgba(139,92,246,0.2)"/>
+            </linearGradient>
+          </defs>
+          <!-- bars: 2018-2025 -->
+          <rect x="10"  y="120" width="52" height="40"  rx="6" fill="url(#barGrad)" opacity="0.5"/>
+          <rect x="80"  y="90"  width="52" height="70"  rx="6" fill="url(#barGrad)" opacity="0.6"/>
+          <rect x="150" y="70"  width="52" height="90"  rx="6" fill="url(#barGrad)" opacity="0.7"/>
+          <rect x="220" y="40"  width="52" height="120" rx="6" fill="url(#barGrad)" opacity="0.85"/>
+          <rect x="290" y="55"  width="52" height="105" rx="6" fill="url(#barGrad)" opacity="0.8"/>
+          <rect x="360" y="20"  width="52" height="140" rx="6" fill="url(#barGrad2)"/>
+          <rect x="430" y="50"  width="52" height="110" rx="6" fill="url(#barGrad)" opacity="0.75"/>
+          <rect x="500" y="80"  width="52" height="80"  rx="6" fill="url(#barGrad)" opacity="0.5"/>
+        </svg>
+        <div class="chart-labels">
+          <span class="chart-label">2018</span>
+          <span class="chart-label">2019</span>
+          <span class="chart-label">2020</span>
+          <span class="chart-label">2021</span>
+          <span class="chart-label">2022</span>
+          <span class="chart-label" style="color:var(--accent2)">2023</span>
+          <span class="chart-label">2024</span>
+          <span class="chart-label">2025</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="artists-card">
+      <div class="card-title">Top Artists</div>
+      <div class="card-sub">By songs saved</div>
+      <div class="artist-list">
+        <div class="artist-item">
+          <div class="artist-rank">1</div>
+          <div class="artist-avatar" style="background:rgba(29,185,84,0.15)">🎵</div>
+          <div class="artist-info"><div class="artist-name">Frank Ocean</div><div class="artist-count">84 songs</div></div>
+          <div class="artist-bar-wrap"><div class="artist-bar-bg"><div class="artist-bar-fill" style="width:100%"></div></div></div>
+        </div>
+        <div class="artist-item">
+          <div class="artist-rank">2</div>
+          <div class="artist-avatar" style="background:rgba(139,92,246,0.15)">🎤</div>
+          <div class="artist-info"><div class="artist-name">Kendrick Lamar</div><div class="artist-count">71 songs</div></div>
+          <div class="artist-bar-wrap"><div class="artist-bar-bg"><div class="artist-bar-fill" style="width:84%;background:var(--accent2)"></div></div></div>
+        </div>
+        <div class="artist-item">
+          <div class="artist-rank">3</div>
+          <div class="artist-avatar" style="background:rgba(236,72,153,0.15)">🎼</div>
+          <div class="artist-info"><div class="artist-name">SZA</div><div class="artist-count">63 songs</div></div>
+          <div class="artist-bar-wrap"><div class="artist-bar-bg"><div class="artist-bar-fill" style="width:75%;background:var(--accent3)"></div></div></div>
+        </div>
+        <div class="artist-item">
+          <div class="artist-rank">4</div>
+          <div class="artist-avatar" style="background:rgba(251,191,36,0.15)">🎹</div>
+          <div class="artist-info"><div class="artist-name">Tyler the Creator</div><div class="artist-count">58 songs</div></div>
+          <div class="artist-bar-wrap"><div class="artist-bar-bg"><div class="artist-bar-fill" style="width:69%;background:#FBB024"></div></div></div>
+        </div>
+        <div class="artist-item">
+          <div class="artist-rank">5</div>
+          <div class="artist-avatar" style="background:rgba(56,189,248,0.15)">🎸</div>
+          <div class="artist-info"><div class="artist-name">Childish Gambino</div><div class="artist-count">47 songs</div></div>
+          <div class="artist-bar-wrap"><div class="artist-bar-bg"><div class="artist-bar-fill" style="width:56%;background:#38BDF8"></div></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom row -->
+  <div class="dash-bottom">
+    <div class="chart-card">
+      <div class="card-title">Top Genres</div>
+      <div class="card-sub">Distribution across your library</div>
+      <div class="genre-list">
+        <div class="genre-item">
+          <div class="genre-name">Hip-Hop / Rap</div>
+          <div class="genre-track"><div class="genre-fill" style="width:72%;background:var(--accent2)"></div></div>
+          <div class="genre-pct">72%</div>
+        </div>
+        <div class="genre-item">
+          <div class="genre-name">R&B / Soul</div>
+          <div class="genre-track"><div class="genre-fill" style="width:58%;background:var(--accent)"></div></div>
+          <div class="genre-pct">58%</div>
+        </div>
+        <div class="genre-item">
+          <div class="genre-name">Alternative</div>
+          <div class="genre-track"><div class="genre-fill" style="width:34%;background:var(--accent3)"></div></div>
+          <div class="genre-pct">34%</div>
+        </div>
+        <div class="genre-item">
+          <div class="genre-name">Jazz / Neo-Soul</div>
+          <div class="genre-track"><div class="genre-fill" style="width:22%;background:#FBB024"></div></div>
+          <div class="genre-pct">22%</div>
+        </div>
+        <div class="genre-item">
+          <div class="genre-name">Electronic</div>
+          <div class="genre-track"><div class="genre-fill" style="width:15%;background:#38BDF8"></div></div>
+          <div class="genre-pct">15%</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="extremes-card">
+      <div class="card-title" style="margin-bottom:6px;">First vs Latest Liked</div>
+      <div class="card-sub">Your library's timeline</div>
+      <div class="extreme-row">
+        <div class="extreme-item">
+          <div class="extreme-tag new">↑ Most Recent</div>
+          <div class="extreme-song">Euphoria</div>
+          <div class="extreme-artist">Kendrick Lamar</div>
+          <div class="extreme-date">Added Mar 2025</div>
+        </div>
+        <div class="extreme-item">
+          <div class="extreme-tag old">↓ Oldest</div>
+          <div class="extreme-song">Thinking Bout You</div>
+          <div class="extreme-artist">Frank Ocean</div>
+          <div class="extreme-date">Added Jan 2018</div>
+        </div>
+      </div>
+      <div style="margin-top:20px;padding:16px;background:rgba(255,255,255,0.03);border-radius:12px;border:1px solid var(--border);">
+        <div style="font-size:0.75rem;color:var(--muted);margin-bottom:6px;">Library Lifespan</div>
+        <div style="background:rgba(255,255,255,0.07);height:6px;border-radius:50px;overflow:hidden;">
+          <div style="height:100%;width:85%;background:linear-gradient(90deg,var(--accent2),var(--accent));border-radius:50px;"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:0.72rem;color:var(--muted);">
+          <span>Jan 2018</span><span style="color:var(--accent)">7 years of music</span><span>Mar 2025</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ EXPLORER ════════ -->
+<div id="explorer" class="page">
+  <div class="explorer-header">
+    <div class="explorer-title">Liked Songs Explorer</div>
+    <div class="explorer-sub">Browse, search and filter your entire library</div>
+  </div>
+
+  <div class="explorer-controls">
+    <div class="search-wrap">
+      <span class="search-icon">⌕</span>
+      <input type="text" placeholder="Search songs, artists, albums…" id="searchInput" oninput="filterTable()"/>
+    </div>
+    <select class="filter-select" onchange="filterTable()">
+      <option>All Years</option>
+      <option>2025</option><option>2024</option><option>2023</option>
+      <option>2022</option><option>2021</option><option>2020</option>
+      <option>2019</option><option>2018</option>
+    </select>
+    <select class="filter-select">
+      <option>All Genres</option>
+      <option>Hip-Hop</option><option>R&B</option>
+      <option>Soul</option><option>Jazz</option><option>Electronic</option>
+    </select>
+    <div class="sort-pills">
+      <div class="sort-pill active" onclick="setSort(this)">Date Added</div>
+      <div class="sort-pill" onclick="setSort(this)">Popularity</div>
+      <div class="sort-pill" onclick="setSort(this)">Release Year</div>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <table class="song-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Song</th>
+          <th>Album</th>
+          <th>Year</th>
+          <th>Popularity</th>
+          <th>Added</th>
+        </tr>
+      </thead>
+      <tbody id="songTableBody">
+        <!-- JS rendered -->
+      </tbody>
+    </table>
+    <div class="table-footer">
+      <div class="table-count" id="tableCount">Showing 10 of 2,847 songs</div>
+      <div class="pagination">
+        <div class="page-btn active">1</div>
+        <div class="page-btn">2</div>
+        <div class="page-btn">3</div>
+        <div class="page-btn">…</div>
+        <div class="page-btn">285</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ EXPORTS ════════ -->
+<div id="exports" class="page">
+  <div class="export-header">
+    <div class="export-title">Export Your Library</div>
+    <div class="export-sub">Download your liked songs in any format you need</div>
+  </div>
+
+  <div class="export-grid">
+    <div class="export-card csv">
+      <div class="export-icon csv">📊</div>
+      <div class="export-format">CSV Spreadsheet</div>
+      <div class="export-desc">Comma-separated file with all song metadata. Opens in Excel, Google Sheets, or any data tool.</div>
+      <div class="export-use">Perfect for data analysis and sorting</div>
+      <br/>
+      <button class="export-btn csv" onclick="showPreview('csv')">↓ Download CSV</button>
+    </div>
+
+    <div class="export-card json">
+      <div class="export-icon json">{ }</div>
+      <div class="export-format">JSON Data</div>
+      <div class="export-desc">Structured JSON with full metadata including artist IDs, album art URLs, and audio features.</div>
+      <div class="export-use">Ideal for developers and scripts</div>
+      <br/>
+      <button class="export-btn json" onclick="showPreview('json')">↓ Download JSON</button>
+    </div>
+
+    <div class="export-card txt">
+      <div class="export-icon txt">📝</div>
+      <div class="export-format">Plain Text List</div>
+      <div class="export-desc">Simple Artist – Song format. One track per line. Great for sharing or keeping a readable log.</div>
+      <div class="export-use">Great for music journaling</div>
+      <br/>
+      <button class="export-btn txt" onclick="showPreview('txt')">↓ Download TXT</button>
+    </div>
+
+    <div class="export-card md">
+      <div class="export-icon md">✦</div>
+      <div class="export-format">Markdown Playlist</div>
+      <div class="export-desc">Formatted Markdown with headings, grouped by artist. Paste directly into Notion, Obsidian, or GitHub.</div>
+      <div class="export-use">For Notion / Obsidian notes</div>
+      <br/>
+      <button class="export-btn md" onclick="showPreview('md')">↓ Download MD</button>
+    </div>
+  </div>
+
+  <div class="preview-panel">
+    <div class="preview-panel-title">Preview — <span id="previewLabel" style="color:var(--muted);font-weight:400">click a format above</span></div>
+    <div class="code-block" id="previewBlock">
+      <span style="color:var(--muted);">// Select a format above to preview the output</span>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ── PAGE SWITCHING ──
+  function showPage(id, btn) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    if(btn) btn.classList.add('active');
+  }
+
+  // ── SORT PILLS ──
+  function setSort(el) {
+    document.querySelectorAll('.sort-pill').forEach(p => p.classList.remove('active'));
+    el.classList.add('active');
+  }
+
+  // ── SONG DATA ──
+  const songs = [
+    { num:1, emoji:'🎵', title:'Nights', artist:'Frank Ocean', album:'Blonde', year:2016, pop:92, added:'Mar 12, 2025' },
+    { num:2, emoji:'🎤', title:'Euphoria', artist:'Kendrick Lamar', album:'GNX', year:2024, pop:98, added:'Mar 9, 2025' },
+    { num:3, emoji:'🎼', title:'Kill Bill', artist:'SZA', album:'SOS', year:2022, pop:91, added:'Feb 28, 2025' },
+    { num:4, emoji:'🎹', title:'Ivy', artist:'Frank Ocean', album:'Blonde', year:2016, pop:87, added:'Feb 14, 2025' },
+    { num:5, emoji:'🎸', title:'PRIDE.', artist:'Kendrick Lamar', album:'DAMN.', year:2017, pop:89, added:'Jan 30, 2025' },
+    { num:6, emoji:'🎵', title:'Pyramids', artist:'Frank Ocean', album:'Channel Orange', year:2012, pop:84, added:'Jan 18, 2025' },
+    { num:7, emoji:'🎤', title:'Snooze', artist:'SZA', album:'SOS', year:2022, pop:90, added:'Jan 5, 2025' },
+    { num:8, emoji:'🎼', title:'New Magic Wand', artist:'Tyler the Creator', album:'IGOR', year:2019, pop:82, added:'Dec 22, 2024' },
+    { num:9, emoji:'🎹', title:'Redbone', artist:'Childish Gambino', album:'Awaken, My Love!', year:2016, pop:93, added:'Dec 10, 2024' },
+    { num:10, emoji:'🎸', title:'HUMBLE.', artist:'Kendrick Lamar', album:'DAMN.', year:2017, pop:96, added:'Nov 28, 2024' },
+  ];
+
+  function renderTable(data) {
+    const tbody = document.getElementById('songTableBody');
+    tbody.innerHTML = data.map(s => `
+      <tr>
+        <td class="song-num">${s.num}</td>
+        <td>
+          <div class="song-title-cell">
+            <div class="song-thumb" style="background:rgba(255,255,255,0.05)">${s.emoji}</div>
+            <div>
+              <div class="song-name">${s.title}</div>
+              <div class="song-artist-small">${s.artist}</div>
+            </div>
+          </div>
+        </td>
+        <td class="song-album-cell">${s.album}</td>
+        <td class="song-year">${s.year}</td>
+        <td>
+          <div class="pop-bar-wrap">
+            <div class="pop-bar"><div class="pop-fill" style="width:${s.pop}%"></div></div>
+          </div>
+        </td>
+        <td class="song-date">${s.added}</td>
+      </tr>
+    `).join('');
+    document.getElementById('tableCount').textContent = `Showing ${data.length} of 2,847 songs`;
+  }
+
+  function filterTable() {
+    const q = document.getElementById('searchInput').value.toLowerCase();
+    const filtered = songs.filter(s =>
+      s.title.toLowerCase().includes(q) ||
+      s.artist.toLowerCase().includes(q) ||
+      s.album.toLowerCase().includes(q)
+    );
+    renderTable(filtered);
+  }
+
+  renderTable(songs);
+
+  // ── EXPORT PREVIEW ──
+  const previews = {
+    csv: {
+      label: 'CSV',
+      content: `<span class="key">Song</span>,<span class="key">Artist</span>,<span class="key">Album</span>,<span class="key">Year</span>,<span class="key">Date Added</span>\n<span class="str">Nights</span>,<span class="str">Frank Ocean</span>,<span class="str">Blonde</span>,<span class="num">2016</span>,<span class="str">2025-03-12</span>\n<span class="str">Euphoria</span>,<span class="str">Kendrick Lamar</span>,<span class="str">GNX</span>,<span class="num">2024</span>,<span class="str">2025-03-09</span>\n<span class="str">Kill Bill</span>,<span class="str">SZA</span>,<span class="str">SOS</span>,<span class="num">2022</span>,<span class="str">2025-02-28</span>\n<span style="color:var(--muted)">... 2,844 more rows</span>`
+    },
+    json: {
+      label: 'JSON',
+      content: `[\n  {\n    <span class="key">"title"</span>: <span class="str">"Nights"</span>,\n    <span class="key">"artist"</span>: <span class="str">"Frank Ocean"</span>,\n    <span class="key">"album"</span>: <span class="str">"Blonde"</span>,\n    <span class="key">"year"</span>: <span class="num">2016</span>,\n    <span class="key">"spotify_id"</span>: <span class="str">"7eqoqGkKwgOaWNNHx90uEZ"</span>,\n    <span class="key">"date_added"</span>: <span class="str">"2025-03-12T14:22:00Z"</span>\n  },\n  <span style="color:var(--muted)">// ... 2,846 more songs</span>\n]`
+    },
+    txt: {
+      label: 'Plain Text',
+      content: `<span class="str">Soundvault Export — Alfred's Library</span>\n<span class="key">Generated: March 2025 · 2,847 songs</span>\n${'─'.repeat(40)}\n\n<span class="str">Frank Ocean</span> — Nights\n<span class="str">Kendrick Lamar</span> — Euphoria\n<span class="str">SZA</span> — Kill Bill\n<span class="str">Frank Ocean</span> — Ivy\n<span class="str">Kendrick Lamar</span> — PRIDE.\n<span style="color:var(--muted)">... 2,842 more songs</span>`
+    },
+    md: {
+      label: 'Markdown',
+      content: `<span class="key"># Alfred's Liked Songs</span>\n<span class="str">_Exported via Soundvault · 2,847 songs_</span>\n\n<span class="key">## Frank Ocean</span> <span class="str">(84 songs)</span>\n- Nights _(Blonde, 2016)_\n- Ivy _(Blonde, 2016)_\n- Pyramids _(Channel Orange, 2012)_\n\n<span class="key">## Kendrick Lamar</span> <span class="str">(71 songs)</span>\n- Euphoria _(GNX, 2024)_\n- PRIDE. _(DAMN., 2017)_\n<span style="color:var(--muted)">... continues</span>`
+    }
+  };
+
+  function showPreview(fmt) {
+    document.getElementById('previewLabel').textContent = previews[fmt].label;
+    document.getElementById('previewBlock').innerHTML = previews[fmt].content;
+  }
+</script>
+</body>
+</html>
