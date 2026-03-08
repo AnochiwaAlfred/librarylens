@@ -9,3 +9,4 @@ class SpotifyToken(models.Model):
     access_token = models.TextField()
     refresh_token = models.TextField()
     expires_at = models.DateTimeField()
+

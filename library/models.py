@@ -30,3 +30,22 @@ class Song(models.Model):
 
     class Meta:
         ordering = ['-date_added']
+
+
+
+class LibrarySync(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    status = models.CharField(
+        max_length=20,
+        choices=[
+            ("idle", "Idle"),
+            ("running", "Running"),
+            ("completed", "Completed"),
+            ("failed", "Failed"),
+        ],
+        default="idle"
+    )
+
+    progress = models.IntegerField(default=0)
+    total = models.IntegerField(default=0)
+    updated_at = models.DateTimeField(auto_now=True)

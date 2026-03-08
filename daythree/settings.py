@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'accounts',
     'library',
+    'django_q',
 ]
 
 MIDDLEWARE = [
@@ -183,3 +184,16 @@ CORS_ALLOW_METHODS = (
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+
+
+# Django Q config — uses your existing postgres db
+Q_CLUSTER = {
+    'name': 'librarylens',
+    'workers': 2,
+    'timeout': 300,        # task times out after 5 mins
+    'retry': 600,          # retry after 10 mins if failed
+    'queue_limit': 50,
+    'bulk': 10,
+    'orm': 'default',      # use postgres, not redis
+}

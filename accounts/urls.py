@@ -8,6 +8,8 @@ urlpatterns = [
     path("spotify-login/", views.spotify_login, name="spotify_login"),
     path("callback/", views.spotify_callback, name="spotify_callback"),
     path('sync/', views.sync_library, name='sync_library'),
+    path('sync-threaded/', views.sync_library_threaded, name='sync_library_threaded'),
+    path("sync-status/", views.sync_status, name="sync_status"),
 path("logout/", views.spotify_logout, name="logout"),
 
 path('export/csv/',  views.export_csv,  name='export_csv'),

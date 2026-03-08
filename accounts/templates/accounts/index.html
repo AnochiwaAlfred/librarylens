@@ -575,6 +575,13 @@
     Sync with Spotify
   </a>
 
+  {% for message in messages %}
+  <div style="padding:12px 20px;background:rgba(29,185,84,0.1);border:1px solid rgba(29,185,84,0.25);
+              border-radius:12px;font-size:0.85rem;color:var(--accent);margin-bottom:16px;">
+    {{ message }}
+  </div>
+  {% endfor %}
+
   <div class="permissions">
     <div class="perm-item"><span class="perm-icon">✓</span> Read liked songs</div>
     <div class="perm-item"><span class="perm-icon">✓</span> View library metadata</div>
@@ -1037,6 +1044,36 @@
       block.innerHTML   = previews[fmt].content;
     }
   }
+
+
+  function checkSync() {
+    const syncUrl = "{% url 'sync_status' %}";
+    fetch(syncUrl)
+    .then(res => res.json())
+    .then(data => {
+
+        if (data.status === "running") {
+            document.getElementById("syncStatus").innerText =
+                `Syncing ${data.progress}/${data.total}`;
+        }
+
+        if (data.status === "completed") {
+            alert("Sync complete! Refresh page.");
+        }
+    });
+  }
+
+
+  function sync() {
+    const syncUrl = "{% url 'sync_library_threaded' %}";
+    fetch(syncUrl)
+    .then(res => res.json())
+  }
+  setInterval(checkSync, 5000);
+  setInterval(sync, 60000);
+
+
+
 </script>
 </body>
 

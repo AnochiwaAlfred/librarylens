@@ -3,6 +3,8 @@ import csv
 import json
 import requests
 import urllib.parse
+import threading
+
 
 from datetime import timedelta
 from collections import defaultdict
@@ -15,11 +17,11 @@ from django.contrib.auth import logout as django_logout
 from django.core.paginator import Paginator
 from django.db.models import Count, Avg
 from django.db.models import Max
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.utils import timezone
 
-from library.models import Song
+from library.models import Song, LibrarySync
 from .models import SpotifyToken
 
 
@@ -448,3 +450,90 @@ def sync_library(request):
         url = response.get("next")
 
     return redirect('home')
+
+
+
+def run_sync(user_id):
+    user = User.objects.get(id=user_id)
+    sync = LibrarySync.objects.get(user=user)
+
+    try:
+        spotify = get_spotify_client(user)
+
+        results = spotify.current_user_saved_tracks(limit=50)
+
+        total = results["total"]
+        sync.total = total
+        sync.save()
+
+        progress = 0
+
+        while results:
+            for item in results["items"]:
+                track = item["track"]
+
+                Song.objects.update_or_create(
+                    user=user,
+                    spotify_id=track["id"],
+                    defaults={
+                        "name": track["name"],
+                        "artist": track["artists"][0]["name"],
+                        "album": track["album"]["name"],
+                    }
+                )
+
+                progress += 1
+
+                if progress % 20 == 0:
+                    sync.progress = progress
+                    sync.save()
+
+            if results["next"]:
+                results = spotify.next(results)
+            else:
+                results = None
+
+        sync.status = "completed"
+        sync.progress = progress
+        sync.save()
+
+    except Exception:
+        sync.status = "failed"
+        sync.save()
+
+
+def sync_status(request):
+    sync, _ = LibrarySync.objects.get_or_create(
+        user=request.user,
+        defaults={
+            "status": "idle",
+            "progress": 0,
+            "total": 0
+        }
+    )
+
+    return JsonResponse({
+        "status": sync.status,
+        "progress": sync.progress,
+        "total": sync.total
+    })
+
+
+def sync_library_threaded(request):
+    sync, _ = LibrarySync.objects.get_or_create(user=request.user)
+
+    if sync.status == "running":
+        return JsonResponse({"message": "Sync already running"})
+
+    sync.status = "running"
+    sync.progress = 0
+    sync.save()
+
+    thread = threading.Thread(
+        target=run_sync,
+        args=(request.user.id,),
+        daemon=True
+    )
+    thread.start()
+
+    return JsonResponse({"message": "Sync started"})
