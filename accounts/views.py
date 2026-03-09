@@ -44,9 +44,22 @@ def spotify_login(request):
 
 
 
-
 def spotify_callback(request):
     code = request.GET.get("code")
+    error = request.GET.get("error")
+    
+    # Check if Spotify returned an error
+    if error:
+        return render(request, 'accounts/error.html', {
+            'error': 'Authentication failed',
+            'message': 'This account is not authorized. Please contact the app developer.'
+        })
+    
+    if not code:
+        return render(request, 'accounts/error.html', {
+            'error': 'No authorization code',
+            'message': 'Authentication process was interrupted.'
+        })
 
     print("Coded")
     # Step 1 — exchange code for tokens
@@ -66,18 +79,46 @@ def spotify_callback(request):
         }
     )
 
-    token_data = response.json()
-    access_token = token_data["access_token"]
-    refresh_token = token_data["refresh_token"]
+    # Check if the token exchange was successful
+    if response.status_code != 200:
+        return render(request, 'accounts/error.html', {
+            'error': 'Token Exchange Failed',
+            'message': f'Spotify returned an error: {response.text}'
+        })
+
+    try:
+        token_data = response.json()
+    except ValueError:
+        return render(request, 'accounts/error.html', {
+            'error': 'Invalid Response',
+            'message': 'Received an invalid response from Spotify. Your account may not be authorized.'
+        })
+
+    access_token = token_data.get("access_token")
+    refresh_token = token_data.get("refresh_token")
+    
+    if not access_token or not refresh_token:
+        return render(request, 'accounts/error.html', {
+            'error': 'Missing Tokens',
+            'message': 'Authentication succeeded but tokens were not received.'
+        })
+    
     expires_at = timezone.now() + timedelta(seconds=token_data["expires_in"])
 
     # Step 2 — get the user's Spotify profile
     print("Profile")
-    profile = requests.get(
+    profile_response = requests.get(
         "https://api.spotify.com/v1/me",
         headers={"Authorization": f"Bearer {access_token}"}
-    ).json()
-
+    )
+    
+    if profile_response.status_code != 200:
+        return render(request, 'accounts/error.html', {
+            'error': 'Profile Fetch Failed',
+            'message': 'Could not retrieve Spotify profile.'
+        })
+    
+    profile = profile_response.json()
     spotify_username = profile["id"]
 
     # Step 3 — get or create a Django user
@@ -95,7 +136,6 @@ def spotify_callback(request):
     )
 
     return redirect("home")
-
 
 def login_page(request):
     # If already logged in, skip the login page

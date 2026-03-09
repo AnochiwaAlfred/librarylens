@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Authentication Error — LibraryLens</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #060612;
+    --surface: rgba(255,255,255,0.04);
+    --border: rgba(255,255,255,0.08);
+    --border-bright: rgba(255,255,255,0.15);
+    --text: #f0eeff;
+    --muted: rgba(240,238,255,0.45);
+    --accent: #1DB954;
+    --accent2: #8B5CF6;
+    --accent3: #EC4899;
+    --error: #EF4444;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  /* ── ORBS ── */
+  .orb {
+    position: fixed; border-radius:50%;
+    filter: blur(80px); pointer-events:none; z-index:0;
+  }
+  .orb-1 { width:600px;height:600px;background:rgba(239,68,68,0.08);top:-200px;left:-200px; }
+  .orb-2 { width:500px;height:500px;background:rgba(139,92,246,0.09);bottom:-150px;right:-150px; }
+  .orb-3 { width:300px;height:300px;background:rgba(236,72,153,0.06);top:50%;left:50%;transform:translate(-50%,-50%); }
+
+  /* ── GRID BG ── */
+  .grid-bg {
+    position: fixed; inset:0; z-index:0; pointer-events:none;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+    background-size: 60px 60px;
+    mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black, transparent);
+  }
+
+  /* ── ERROR CARD ── */
+  .error-wrap {
+    position: relative; z-index:10;
+    width: 100%; max-width: 520px;
+    padding: 0 24px;
+    animation: fadeUp 0.7s ease both;
+  }
+
+  .error-card {
+    background: rgba(255,255,255,0.05);
+    backdrop-filter: blur(32px);
+    -webkit-backdrop-filter: blur(32px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 28px;
+    padding: 48px 40px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* top shimmer line */
+  .error-card::before {
+    content:''; position:absolute; top:0; left:20%; right:20%; height:1px;
+    background: linear-gradient(90deg, transparent, rgba(239,68,68,0.5), transparent);
+  }
+
+  /* inner glow */
+  .error-card::after {
+    content:''; position:absolute;
+    width:200px; height:200px; border-radius:50%;
+    background: rgba(239,68,68,0.06);
+    filter: blur(40px);
+    top:-60px; left:50%; transform:translateX(-50%);
+    pointer-events:none;
+  }
+
+  .error-logo {
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    font-family:'Syne',sans-serif; font-weight:800; font-size:1.4rem;
+    letter-spacing:-0.02em; margin-bottom:32px;
+  }
+  .error-logo .accent { color: var(--accent); }
+  .error-logo-dot {
+    width:8px;height:8px;border-radius:50%;
+    background:var(--error);
+    box-shadow:0 0 10px var(--error);
+  }
+
+  .error-icon {
+    width:80px; height:80px; margin:0 auto 24px;
+    border-radius:50%;
+    background: rgba(239,68,68,0.1);
+    border: 1px solid rgba(239,68,68,0.2);
+    display:flex; align-items:center; justify-content:center;
+    animation: pulse 2s ease-in-out infinite;
+  }
+  .error-icon svg {
+    width:40px; height:40px; color:var(--error);
+  }
+
+  @keyframes pulse {
+    0%, 100% { transform:scale(1); opacity:1; }
+    50% { transform:scale(1.05); opacity:0.9; }
+  }
+
+  .error-heading {
+    font-family:'Syne',sans-serif;
+    font-size:1.7rem; font-weight:800;
+    letter-spacing:-0.03em;
+    line-height:1.2;
+    text-align:center;
+    margin-bottom:12px;
+  }
+
+  .error-message {
+    text-align:center; font-size:0.9rem;
+    color:var(--muted); line-height:1.6;
+    margin-bottom:32px;
+  }
+
+  /* ── INFO BOX ── */
+  .info-box {
+    background:rgba(255,255,255,0.03);
+    border:1px solid var(--border);
+    border-left: 3px solid var(--accent2);
+    border-radius:14px;
+    padding:20px 24px;
+    margin-bottom:32px;
+    text-align:left;
+  }
+  .info-box h3 {
+    font-family:'Syne',sans-serif;
+    font-size:0.95rem; font-weight:700;
+    margin-bottom:12px;
+  }
+  .info-box p {
+    font-size:0.85rem;
+    color:var(--muted);
+    line-height:1.6;
+    margin-bottom:12px;
+  }
+  .info-box ul {
+    list-style:none;
+    display:flex; flex-direction:column; gap:8px;
+  }
+  .info-box li {
+    font-size:0.82rem;
+    color:var(--muted);
+    display:flex; align-items:center; gap:8px;
+  }
+  .info-box li::before {
+    content:'→';
+    color:var(--accent);
+    font-weight:700;
+  }
+
+  /* ── BUTTONS ── */
+  .button-group {
+    display:flex; gap:12px; justify-content:center;
+    flex-wrap:wrap;
+  }
+
+  .btn {
+    padding:14px 28px;
+    border-radius:14px;
+    font-family:'Syne',sans-serif;
+    font-size:0.9rem;
+    font-weight:600;
+    text-decoration:none;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    transition: all 0.25s;
+    cursor:pointer;
+    border:none;
+    position:relative;
+    overflow:hidden;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #000;
+    box-shadow: 0 8px 32px rgba(29,185,84,0.25);
+  }
+  .btn-primary::before {
+    content:''; position:absolute; inset:0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.15), transparent);
+    opacity:0; transition:opacity 0.25s;
+  }
+  .btn-primary:hover {
+    transform:translateY(-2px);
+    box-shadow: 0 12px 40px rgba(29,185,84,0.4);
+  }
+  .btn-primary:hover::before { opacity:1; }
+
+  .btn-secondary {
+    background:rgba(255,255,255,0.05);
+    border:1px solid var(--border);
+    color:var(--text);
+  }
+  .btn-secondary:hover {
+    background:rgba(255,255,255,0.08);
+    border-color:var(--border-bright);
+  }
+
+  /* ── FOOTER ── */
+  .error-footer {
+    margin-top:32px;
+    padding-top:24px;
+    border-top:1px solid var(--border);
+    text-align:center;
+    font-size:0.78rem;
+    color:var(--muted);
+  }
+
+  /* ── ANIMATION ── */
+  @keyframes fadeUp {
+    from { opacity:0; transform:translateY(24px); }
+    to   { opacity:1; transform:translateY(0); }
+  }
+
+  @media (max-width: 480px) {
+    .error-card { padding:36px 28px; }
+    .error-heading { font-size:1.4rem; }
+    .button-group { flex-direction:column; }
+    .btn { width:100%; }
+  }
+</style>
+</head>
+<body>
+
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+<div class="orb orb-3"></div>
+<div class="grid-bg"></div>
+
+<!-- ERROR CARD -->
+<div class="error-wrap">
+  <div class="error-card">
+
+    <div class="error-logo">
+      <div class="error-logo-dot"></div>
+      <span><span class="accent">Library</span>Lens</span>
+    </div>
+
+    <div class="error-icon">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+      </svg>
+    </div>
+
+    <h1 class="error-heading">{{ error }}</h1>
+    <p class="error-message">{{ message }}</p>
+
+    <div class="info-box">
+      <h3>Why am I seeing this?</h3>
+      <p>This LibraryLens app is currently in <strong>Development Mode</strong> on Spotify. Only authorized users can sign in.</p>
+      <ul>
+        <li>Contact the app developer to add your Spotify account</li>
+        <li>Make sure you're using the correct Spotify account</li>
+        <li>Check if you have access to this application</li>
+      </ul>
+    </div>
+
+    <div class="button-group">
+      <a href="{% url 'login_page' %}" class="btn btn-primary">
+        ← Back to Login
+      </a>
+      <a href="mailto:support@librarylens.com" class="btn btn-secondary">
+        Contact Support
+      </a>
+    </div>
+
+    <div class="error-footer">
+      <p>LibraryLens — Your Spotify Library, Reimagined</p>
+    </div>
+
+  </div>
+</div>
+
+</body>
+</html>
