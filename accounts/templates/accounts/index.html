@@ -1064,13 +1064,21 @@
   }
 
 
-  function sync() {
+  function sync_library_threaded() {
     const syncUrl = "{% url 'sync_library_threaded' %}";
     fetch(syncUrl)
     .then(res => res.json())
   }
-  setInterval(checkSync, 5000);
-  setInterval(sync, 60000);
+
+  function sync_library() {
+    const syncUrl = "{% url 'sync_library' %}";
+    fetch(syncUrl)
+    .then(res => res.json())
+  }
+  setInterval(checkSync, 30000);
+  setInterval(sync_library, 120000);
+  setInterval(sync_library_threaded, 60000);
+  setInterval(window.location.reload.bind(window.location), 600000);
 
 
 
